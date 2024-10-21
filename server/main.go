@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
 	"net/http"
 
+	"github.com/Kureans/ninjorc/server/game"
 	"github.com/gorilla/websocket"
 )
 
@@ -12,21 +12,10 @@ type Client struct {
 	conn     *websocket.Conn
 }
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-}
-
-func initClient(w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-}
-
 func main() {
-	http.HandleFunc("/", initClient)
-	go http.ListenAndServe(":8080", nil)
+	manager := game.LobbyManager{}
+	manager.Init()
+	http.HandleFunc("/", manager.InitClient)
+	print("Listening on port 8080...")
+	http.ListenAndServe(":8080", nil)
 }
