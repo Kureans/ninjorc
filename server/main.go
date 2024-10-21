@@ -15,7 +15,7 @@ type Client struct {
 func main() {
 	manager := game.LobbyManager{}
 	manager.Init()
-	http.HandleFunc("/", manager.InitClient)
+	http.HandleFunc("/", manager.HandleNewClient)
 	print("Listening on port 8080...")
 	http.ListenAndServe(":8080", nil)
 }

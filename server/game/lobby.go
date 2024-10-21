@@ -24,7 +24,7 @@ func (m *LobbyManager) Init() {
 	go m.lobbies[0].run()
 }
 
-func (m *LobbyManager) InitClient(w http.ResponseWriter, r *http.Request) {
+func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 	m.upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	socket, err := m.upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -44,6 +44,7 @@ func (m *LobbyManager) InitClient(w http.ResponseWriter, r *http.Request) {
 	player := Player{
 		isReady: true,
 		conn:    conn,
+		//init orc later when game starts
 		controller: PlayerController{
 			inputCh: playerCh,
 		},
@@ -62,7 +63,6 @@ func (l *Lobby) run() {
 	for !(l.hasEnoughPlayers() && l.arePlayersReady()) {
 	}
 	print("enough players and all ready, starting game")
-
 	l.startGame()
 }
 
@@ -79,5 +79,6 @@ func (l *Lobby) arePlayersReady() bool {
 }
 
 func (l *Lobby) startGame() {
+	l.game.gameState.init(&l.players)
 	l.game.run()
 }
