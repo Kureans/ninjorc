@@ -3,18 +3,24 @@ package game
 import "github.com/gorilla/websocket"
 
 type Connection struct {
-	socket   *websocket.Conn
-	clientCh chan<- ClientInput
-	playerCh chan<- PlayerInput
+	socket  *websocket.Conn
+	gameCh  chan<- GameInput
+	lobbyCh chan<- LobbyInput
 }
 
-type ClientInput struct {
-	isReady bool
+type Packet struct {
+	Id   int
+	Type string
+	Data map[string]interface{}
 }
 
-type PlayerInput struct {
-	direction Direction
-	action    Action
+type LobbyInput struct {
+	IsReady bool
+}
+
+type GameInput struct {
+	Direction Direction
+	Action    Action
 }
 
 type Direction int8

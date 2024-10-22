@@ -32,13 +32,13 @@ func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientCh := make(chan ClientInput)
-	playerCh := make(chan PlayerInput)
+	lobbyCh := make(chan LobbyInput)
+	gameCh := make(chan GameInput)
 	//add to lobby 1 for now
 	conn := Connection{
-		socket:   socket,
-		clientCh: clientCh,
-		playerCh: playerCh,
+		socket:  socket,
+		gameCh:  gameCh,
+		lobbyCh: lobbyCh,
 	}
 
 	player := Player{
@@ -46,12 +46,13 @@ func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 		conn:    conn,
 		//init orc later when game starts
 		controller: PlayerController{
-			inputCh: playerCh,
+			inputCh: gameCh,
 		},
 	}
 
 	m.lobbies[0].players = append(m.lobbies[0].players, player)
-	print("added a client")
+	go player.run()
+	print("added a client\n")
 }
 
 type Lobby struct {

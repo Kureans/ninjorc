@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"log"
 	"time"
 )
 
@@ -70,8 +71,51 @@ type Player struct {
 	controller PlayerController
 }
 
+func (p *Player) handleLobbyActions(lobbyCh <-chan LobbyInput) {
+	for input := range lobbyCh {
+		if input.IsReady {
+			p.isReady = true
+		} else {
+			p.isReady = false
+		}
+	}
+}
+
+func (p *Player) routeInputs() {
+	var packet Packet
+	for {
+		err := p.conn.socket.ReadJSON(&packet)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
+		fmt.Printf("ID: %d, Type: %s\n", packet.Id, packet.Type)
+		switch packet.Type {
+		case "C":
+			print("Client")
+			c := packet.Data
+			print(c["IsReady"])
+		case "G":
+			print("Game\n")
+			g := packet.Data
+			fmt.Printf("Action: %v, Direction: %v",
+				Action(g["Action"].(float64)),
+				Direction(g["Direction"].(float64)))
+
+			p.conn.gameCh <- GameInput{
+				Action:    Action(g["Action"].(float64)),
+				Direction: Direction(g["Direction"].(float64)),
+			}
+		default:
+			panic("Invalid Packet Type")
+		}
+
+	}
+
+}
+
 type PlayerController struct {
-	inputCh <-chan PlayerInput
+	inputCh <-chan GameInput
 	orc     *Orc
 }
 
