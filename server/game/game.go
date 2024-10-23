@@ -2,7 +2,6 @@ package game
 
 import (
 	"fmt"
-	"log"
 	"time"
 )
 
@@ -86,24 +85,6 @@ func (o *Orc) updateAction(action Action) {
 	}
 }
 
-func max(a int, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a int, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func printLocation(o *Orc) {
-	fmt.Printf("x: %d, y: %d\n", o.point.x, o.point.y)
-}
-
 type Hitbox struct {
 	vertices []Point
 }
@@ -113,69 +94,10 @@ type Point struct {
 	y int
 }
 
-type Player struct {
-	id         int
-	conn       Connection
-	isReady    bool
-	controller PlayerController
-}
-
-func (p *Player) handleLobbyInputs(lobbyCh <-chan LobbyInput) {
-	for input := range lobbyCh {
-		if input.IsReady {
-			p.isReady = true
-		} else {
-			p.isReady = false
-		}
-	}
-}
-
-func (p *Player) routeInputs() {
-	var packet Packet
-	for {
-		err := p.conn.socket.ReadJSON(&packet)
-		if err != nil {
-			log.Fatal(err)
-			return
-		}
-		fmt.Printf("ID: %d, Type: %s\n", packet.Id, packet.Type)
-		switch packet.Type {
-		case "L":
-			print("Lobby\n")
-			p.isReady = packet.Data[0].Lobby.IsReady
-		case "G":
-			print("Game\n")
-			gameInputs := make([]GameInput, packet.Size)
-
-			for idx, item := range packet.Data {
-				gameInputs[idx] = item.Game
-			}
-			p.conn.gameCh <- GameInputBatch{
-				size:   packet.Size,
-				inputs: gameInputs,
-			}
-		default:
-			panic("Invalid Packet Type")
-		}
-
-	}
-
-}
-
-type PlayerController struct {
-	inputCh <-chan GameInputBatch
-	orc     *Orc
-}
-
-func (pc *PlayerController) handleGameInputs() {
-	for batch := range pc.inputCh {
-		for _, input := range batch.inputs {
-			pc.orc.updateLocation(input.Direction)
-			pc.orc.updateAction(input.Action)
-		}
-	}
-}
-
 type Projectile struct {
 	hitbox Hitbox
+}
+
+func printLocation(o *Orc) {
+	fmt.Printf("x: %d, y: %d\n", o.point.x, o.point.y)
 }

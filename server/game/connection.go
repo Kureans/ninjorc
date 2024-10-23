@@ -1,11 +1,25 @@
 package game
 
-import "github.com/gorilla/websocket"
+import (
+	"log"
+
+	"github.com/gorilla/websocket"
+)
 
 type Connection struct {
 	socket  *websocket.Conn
 	gameCh  chan<- GameInputBatch
 	lobbyCh chan<- LobbyInput
+}
+
+// for alt serialisation protocols, use readMessage then a separate serialisation fn
+func (conn *Connection) getNextPacket() Packet {
+	var packet Packet
+	err := conn.socket.ReadJSON(&packet)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return packet
 }
 
 type Packet struct {
