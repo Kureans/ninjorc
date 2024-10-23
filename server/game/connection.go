@@ -4,14 +4,20 @@ import "github.com/gorilla/websocket"
 
 type Connection struct {
 	socket  *websocket.Conn
-	gameCh  chan<- GameInput
+	gameCh  chan<- GameInputBatch
 	lobbyCh chan<- LobbyInput
 }
 
 type Packet struct {
 	Id   int
 	Type string
-	Data map[string]interface{}
+	Size int
+	Data []InputUnion
+}
+
+type InputUnion struct {
+	Lobby LobbyInput
+	Game  GameInput
 }
 
 type LobbyInput struct {
@@ -21,6 +27,11 @@ type LobbyInput struct {
 type GameInput struct {
 	Direction Direction
 	Action    Action
+}
+
+type GameInputBatch struct {
+	size   int
+	inputs []GameInput
 }
 
 type Direction int8

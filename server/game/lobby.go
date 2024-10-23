@@ -33,7 +33,7 @@ func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	lobbyCh := make(chan LobbyInput)
-	gameCh := make(chan GameInput)
+	gameCh := make(chan GameInputBatch)
 	//add to lobby 1 for now
 	conn := Connection{
 		socket:  socket,
@@ -41,7 +41,7 @@ func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 		lobbyCh: lobbyCh,
 	}
 
-	player := Player{
+	player := &Player{
 		isReady: true,
 		conn:    conn,
 		//init orc later when game starts
@@ -51,19 +51,20 @@ func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m.lobbies[0].players = append(m.lobbies[0].players, player)
-	go player.run()
+	go player.routeInputs()
+	go player.handleLobbyInputs(lobbyCh)
 	print("added a client\n")
 }
 
 type Lobby struct {
 	game    Game
-	players []Player
+	players []*Player
 }
 
 func (l *Lobby) run() {
 	for !(l.hasEnoughPlayers() && l.arePlayersReady()) {
 	}
-	print("enough players and all ready, starting game")
+	print("enough players and all ready, starting game\n")
 	l.startGame()
 }
 
@@ -81,5 +82,5 @@ func (l *Lobby) arePlayersReady() bool {
 
 func (l *Lobby) startGame() {
 	l.game.gameState.init(&l.players)
-	l.game.run()
+	go l.game.run()
 }

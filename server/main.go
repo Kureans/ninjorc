@@ -16,6 +16,6 @@ func main() {
 	manager := game.LobbyManager{}
 	manager.Init()
 	http.HandleFunc("/", manager.HandleNewClient)
-	print("Listening on port 8080...")
+	print("Listening on port 8080...\n")
 	http.ListenAndServe(":8080", nil)
 }
