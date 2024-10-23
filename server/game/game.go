@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	ORC_SPEED        = 2
+	ORC_HEIGHT       = 100
+	ORC_WIDTH        = 100
+	ORC_SPEED        = 40
 	PROJECTILE_SPEED = 5
 	MAP_WIDTH        = 1500
 	MAP_HEIGHT       = 700
@@ -19,10 +21,18 @@ type Game struct {
 
 func (g *Game) run() {
 	for range time.Tick(16 * time.Millisecond) {
-		// for  := range g.gameState.orcs {
-		// 	// print("ID: ", idx)
-		// 	// printLocation(&orc)
-		// }
+		for idx, orc := range g.gameState.orcs {
+			fmt.Printf("ID: %d", idx)
+			printLocation(&orc)
+			for i, other := range g.gameState.orcs {
+				if idx == i {
+					continue
+				}
+				if orc.hitbox.collidesWith(&other.hitbox) {
+					print("collision detected!!!!")
+				}
+			}
+		}
 	}
 }
 
@@ -42,6 +52,7 @@ func (gs *GameState) init(players *[]*Player) {
 }
 
 type Orc struct {
+	// should also contain other data like health
 	hitbox Hitbox
 	point  Point
 }
@@ -49,13 +60,11 @@ type Orc struct {
 func (o *Orc) init(x int, y int) {
 	o.point.x = x
 	o.point.y = y
-	//hard-coding orcs to be 100x100 px
-	o.hitbox.vertices = []Point{
-		Point{x: x - 100, y: y - 100},
-		Point{x: x + 100, y: y - 100},
-		Point{x: x + 100, y: y + 100},
-		Point{x: x + 100, y: y + 100},
-	}
+	// when we update location, hitbox point also updated
+	// reason for this (might not be legit) is i want separation of location / hitbox
+	o.hitbox.point = &o.point
+	o.hitbox.height = ORC_HEIGHT
+	o.hitbox.width = ORC_WIDTH
 }
 
 func (o *Orc) updateLocation(direction Direction) {
@@ -86,7 +95,25 @@ func (o *Orc) updateAction(action Action) {
 }
 
 type Hitbox struct {
-	vertices []Point
+	point  *Point
+	height int
+	width  int
+}
+
+// Collision detection algorithm:
+// HB1.TR(x,y) > HB2.BL(x,y) &&
+// HB1.BL(x,y) < HB2.TR(x,y)
+// note that canvas top left (0,0), bottom right (CANVAS_WIDTH, CANVAS_HEIGHT)
+func (hb *Hitbox) collidesWith(other *Hitbox) bool {
+	hbTR := Point{x: hb.point.x + hb.width, y: hb.point.y - hb.height}
+	hbBL := Point{x: hb.point.x - hb.width, y: hb.point.y + hb.height}
+	otherTR := Point{x: other.point.x + other.width, y: other.point.y - other.height}
+	otherBL := Point{x: other.point.x - other.width, y: other.point.y + other.height}
+
+	isOverlappingVertice := (hbTR.x >= otherBL.x && hbTR.y <= otherBL.y) &&
+		(hbBL.x >= otherTR.x && hbBL.y <= otherBL.y)
+
+	return isOverlappingVertice
 }
 
 type Point struct {
