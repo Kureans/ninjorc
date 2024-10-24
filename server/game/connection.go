@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -20,6 +21,16 @@ func (conn *Connection) getNextPacket() Packet {
 		log.Fatal(err)
 	}
 	return packet
+}
+
+func (conn *Connection) sendPacket(response GameResponse) {
+	for _, orc := range response.Orcs {
+		fmt.Printf("ID: %d, Point: %v\n", orc.Id, orc.Point)
+	}
+	err := conn.socket.WriteJSON(response)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 type Packet struct {
@@ -46,6 +57,10 @@ type GameInput struct {
 type GameInputBatch struct {
 	size   int
 	inputs []GameInput
+}
+
+type GameResponse struct {
+	Orcs []Orc
 }
 
 type Direction int8

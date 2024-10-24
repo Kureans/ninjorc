@@ -47,6 +47,12 @@ func (p *Player) routeInputs() {
 	}
 }
 
+func (p *Player) handleGameResponses(responseCh <-chan GameResponse) {
+	for response := range responseCh {
+		p.conn.sendPacket(response)
+	}
+}
+
 type PlayerController struct {
 	inputCh <-chan GameInputBatch
 	orc     *Orc

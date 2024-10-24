@@ -94,6 +94,7 @@ func (l *Lobby) resetReadyStatus() {
 }
 
 func (l *Lobby) startGame() {
+	l.game.initResponseChannels(&l.players)
 	l.game.gameState.init(&l.players)
 	l.game.run()
 }

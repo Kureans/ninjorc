@@ -31,8 +31,18 @@ const (
 )
 
 type Game struct {
-	id        uint16
-	gameState GameState
+	id                uint16
+	gameState         GameState
+	playerResponseChs []chan GameResponse
+}
+
+func (g *Game) initResponseChannels(players *[]*Player) {
+	g.playerResponseChs = make([]chan GameResponse, len(*players))
+	for idx, player := range *players {
+		responseCh := make(chan GameResponse)
+		g.playerResponseChs[idx] = responseCh
+		go player.handleGameResponses(responseCh)
+	}
 }
 
 func (g *Game) run() {
@@ -42,13 +52,13 @@ func (g *Game) run() {
 			orc := &g.gameState.orcs[idx]
 			// fmt.Printf("ID: %d", idx)
 			// printLocation(&orc)
-			if orc.action == Action_MELEE && !orc.isSwinging {
+			if orc.Action == Action_MELEE && !orc.IsSwinging {
 				swing := orc.swing()
 				g.gameState.meleeSwings = append(g.gameState.meleeSwings, swing)
 			}
 
 			// reset orc action if no further inputs
-			orc.action = Action_NONE
+			orc.Action = Action_NONE
 		}
 
 		for idx := range g.gameState.meleeSwings {
@@ -56,18 +66,18 @@ func (g *Game) run() {
 			// for each swing check if it collides w/ any orc
 			for j := range g.gameState.orcs {
 				orc := &g.gameState.orcs[j]
-				if swing.id == orc.id {
+				if swing.id == orc.Id {
 					continue
 				}
 				if swing.hurtbox.isActive &&
 					swing.hurtbox.hitbox.collidesWith(&orc.hitbox) {
 					swing.hurtbox.isActive = false
-					orc.health -= swing.hurtbox.damage
-					fmt.Printf("Orc %d got hit, remaining hp %d\n", orc.id, orc.health)
-					if orc.health < 0 {
-						fmt.Printf("Player %d died, Player %d gets a point\n", orc.id, swing.id)
+					orc.Health -= swing.hurtbox.damage
+					fmt.Printf("Orc %d got hit, remaining hp %d\n", orc.Id, orc.Health)
+					if orc.Health < 0 {
+						fmt.Printf("Player %d died, Player %d gets a point\n", orc.Id, swing.id)
 						g.gameState.scores[idx]++
-						orc.init(orc.id, 50+200*orc.id, 50+200*orc.id, Direction_NONE) //reset
+						orc.init(orc.Id, 50+200*orc.Id, 50+200*orc.Id, Direction_NONE) //reset
 					}
 				}
 			}
@@ -79,7 +89,7 @@ func (g *Game) run() {
 		fmt.Printf("No. of swings in play: %d\n", len(g.gameState.meleeSwings))
 
 		for len(g.gameState.meleeSwings) > 0 && g.gameState.meleeSwings[0].activeTicksRemaining == 0 {
-			g.gameState.orcs[g.gameState.meleeSwings[0].id].isSwinging = false
+			g.gameState.orcs[g.gameState.meleeSwings[0].id].IsSwinging = false
 			g.gameState.meleeSwings = g.gameState.meleeSwings[1:]
 			fmt.Print("Removed swing\n")
 		}
@@ -90,7 +100,11 @@ func (g *Game) run() {
 				return
 			}
 		}
+
 		//TODO: send state data back to clients to render
+		for _, ch := range g.playerResponseChs {
+			ch <- GameResponse{Orcs: g.gameState.orcs}
+		}
 	}
 }
 
@@ -114,45 +128,45 @@ func (gs *GameState) init(players *[]*Player) {
 }
 
 type Orc struct {
-	id         int
-	health     int
+	Id         int
+	Health     int
 	hitbox     Hitbox
-	point      Point
-	direction  Direction
-	action     Action
-	isSwinging bool
+	Point      Point
+	Direction  Direction
+	Action     Action
+	IsSwinging bool
 }
 
 func (o *Orc) init(id int, x int, y int, dir Direction) {
-	o.id = id
-	o.point.x = x
-	o.point.y = y
-	o.health = ORC_HEALTH
+	o.Id = id
+	o.Point.x = x
+	o.Point.y = y
+	o.Health = ORC_HEALTH
 
 	// when we update location, hitbox point also updated
 	// reason for this (might not be legit) is i want separation of location / hitbox
-	o.hitbox.point = &o.point
+	o.hitbox.point = &o.Point
 	o.hitbox.height = ORC_HEIGHT
 	o.hitbox.width = ORC_WIDTH
 
-	o.direction = dir
-	o.isSwinging = false
+	o.Direction = dir
+	o.IsSwinging = false
 }
 
 func (o *Orc) updateLocation(direction Direction) {
 	switch direction {
 	case Direction_UP:
 		print("going up")
-		o.point.y = max(0, o.point.y-ORC_SPEED)
+		o.Point.y = max(0, o.Point.y-ORC_SPEED)
 	case Direction_DOWN:
 		print("going down")
-		o.point.y = min(MAP_HEIGHT, o.point.y+ORC_SPEED)
+		o.Point.y = min(MAP_HEIGHT, o.Point.y+ORC_SPEED)
 	case Direction_LEFT:
 		print("going left")
-		o.point.x = max(0, o.point.x-ORC_SPEED)
+		o.Point.x = max(0, o.Point.x-ORC_SPEED)
 	case Direction_RIGHT:
 		print("going right")
-		o.point.x = min(MAP_WIDTH, o.point.x+ORC_SPEED)
+		o.Point.x = min(MAP_WIDTH, o.Point.x+ORC_SPEED)
 	}
 	printLocation(o)
 }
@@ -161,25 +175,25 @@ func (o *Orc) updateAction(action Action) {
 	switch action {
 	case Action_MELEE:
 		print("orc swing")
-		o.action = Action_MELEE
+		o.Action = Action_MELEE
 	case Action_BLINK:
 		print("orc blink")
-		o.action = Action_BLINK
+		o.Action = Action_BLINK
 	case Action_PROJECTILE:
 		print("orc fire")
-		o.action = Action_PROJECTILE
+		o.Action = Action_PROJECTILE
 	case Action_NONE:
 		print("orc do nothing")
-		o.action = Action_NONE
+		o.Action = Action_NONE
 	}
 }
 
 func (o *Orc) swing() MeleeSwing {
-	o.isSwinging = true
+	o.IsSwinging = true
 	swingLocation := o.getSwingLocation()
 	swingHurtbox := Hurtbox{}
 
-	if o.direction == Direction_UP || o.direction == Direction_DOWN {
+	if o.Direction == Direction_UP || o.Direction == Direction_DOWN {
 		swingHurtbox.init(ORC_SWING_DAMAGE, swingLocation,
 			ORC_SWING_HEIGHT_VERTICAL,
 			ORC_SWING_WIDTH_VERTICAL)
@@ -190,7 +204,7 @@ func (o *Orc) swing() MeleeSwing {
 	}
 
 	swing := MeleeSwing{
-		id:                   o.id,
+		id:                   o.Id,
 		activeTicksRemaining: 5,
 		hurtbox:              swingHurtbox,
 	}
@@ -199,8 +213,8 @@ func (o *Orc) swing() MeleeSwing {
 }
 
 func (o *Orc) getSwingLocation() Point {
-	swingPoint := o.point
-	switch o.direction {
+	swingPoint := o.Point
+	switch o.Direction {
 	case Direction_UP:
 		swingPoint.y += o.hitbox.height/2 + ORC_SWING_HEIGHT_VERTICAL/2
 	case Direction_DOWN:
@@ -296,5 +310,5 @@ type Projectile struct {
 }
 
 func printLocation(o *Orc) {
-	fmt.Printf("x: %d, y: %d\n", o.point.x, o.point.y)
+	fmt.Printf("x: %d, y: %d\n", o.Point.x, o.Point.y)
 }
