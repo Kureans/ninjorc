@@ -14,7 +14,9 @@ type LobbyManager struct {
 
 func (m *LobbyManager) Init() {
 	m.lobbies = make([]Lobby, 10)
-	m.lobbies[0] = Lobby{}
+	m.lobbies[0] = Lobby{
+		isOpen: true,
+	}
 	m.upgrader = websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
@@ -57,15 +59,20 @@ func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 }
 
 type Lobby struct {
+	isOpen  bool
 	game    Game
 	players []*Player
 }
 
 func (l *Lobby) run() {
-	for !(l.hasEnoughPlayers() && l.arePlayersReady()) {
+	for l.isOpen {
+		for !(l.hasEnoughPlayers() && l.arePlayersReady()) {
+		}
+		print("enough players and all ready, starting game\n")
+		l.startGame()
+		print("game ended, back to lobby")
+		l.resetReadyStatus()
 	}
-	print("enough players and all ready, starting game\n")
-	l.startGame()
 }
 
 func (l *Lobby) hasEnoughPlayers() bool {
@@ -80,7 +87,13 @@ func (l *Lobby) arePlayersReady() bool {
 	return status
 }
 
+func (l *Lobby) resetReadyStatus() {
+	for _, player := range l.players {
+		player.isReady = false
+	}
+}
+
 func (l *Lobby) startGame() {
 	l.game.gameState.init(&l.players)
-	go l.game.run()
+	l.game.run()
 }

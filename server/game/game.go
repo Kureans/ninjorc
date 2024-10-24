@@ -26,6 +26,8 @@ const (
 
 	TIME_UNIT_MS_DEV  = 1000
 	TIME_UNIT_MS_PROD = 16
+
+	SCORE_TO_WIN = 2
 )
 
 type Game struct {
@@ -35,6 +37,7 @@ type Game struct {
 
 func (g *Game) run() {
 	for range time.Tick(TIME_UNIT_MS_DEV * time.Millisecond) {
+
 		for idx := range g.gameState.orcs {
 			orc := &g.gameState.orcs[idx]
 			// fmt.Printf("ID: %d", idx)
@@ -43,15 +46,6 @@ func (g *Game) run() {
 				swing := orc.swing()
 				g.gameState.meleeSwings = append(g.gameState.meleeSwings, swing)
 			}
-
-			// for i, other := range g.gameState.orcs {
-			// 	if idx == i {
-			// 		continue
-			// 	}
-			// 	if orc.hitbox.collidesWith(&other.hitbox) {
-			// 		print("collision detected!!!!\n")
-			// 	}
-			// }
 
 			// reset orc action if no further inputs
 			orc.action = Action_NONE
@@ -70,6 +64,11 @@ func (g *Game) run() {
 					swing.hurtbox.isActive = false
 					orc.health -= swing.hurtbox.damage
 					fmt.Printf("Orc %d got hit, remaining hp %d\n", orc.id, orc.health)
+					if orc.health < 0 {
+						fmt.Printf("Player %d died, Player %d gets a point\n", orc.id, swing.id)
+						g.gameState.scores[idx]++
+						orc.init(orc.id, 50+200*orc.id, 50+200*orc.id, Direction_NONE) //reset
+					}
 				}
 			}
 
@@ -84,10 +83,19 @@ func (g *Game) run() {
 			g.gameState.meleeSwings = g.gameState.meleeSwings[1:]
 			fmt.Print("Removed swing\n")
 		}
+
+		for idx, score := range g.gameState.scores {
+			if score == SCORE_TO_WIN {
+				fmt.Println("Winner: ", idx)
+				return
+			}
+		}
+		//TODO: send state data back to clients to render
 	}
 }
 
 type GameState struct {
+	scores      []int
 	orcs        []Orc // use idx of orcs array as their ID
 	projectiles []Projectile
 	meleeSwings []MeleeSwing
@@ -95,9 +103,11 @@ type GameState struct {
 
 func (gs *GameState) init(players *[]*Player) {
 	gs.orcs = make([]Orc, len(*players))
+	gs.scores = make([]int, len(*players))
+	gs.meleeSwings = make([]MeleeSwing, 0)
 	for idx, player := range *players {
 		gs.orcs[idx] = Orc{}
-		gs.orcs[idx].init(idx, 200*idx, 200*idx, Direction_NONE)
+		gs.orcs[idx].init(idx, 50+200*idx, 50+200*idx, Direction_NONE)
 		player.controller.orc = &gs.orcs[idx]
 		go player.controller.handleGameInputs()
 	}
