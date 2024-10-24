@@ -100,18 +100,39 @@ type Hitbox struct {
 	width  int
 }
 
-// Collision detection algorithm:
-// HB1.TR(x,y) > HB2.BL(x,y) &&
-// HB1.BL(x,y) < HB2.TR(x,y)
+func (hb *Hitbox) getTopRight() Point {
+	return Point{x: hb.point.x + hb.width, y: hb.point.y - hb.height}
+}
+
+func (hb *Hitbox) getBottomleft() Point {
+	return Point{x: hb.point.x - hb.width, y: hb.point.y + hb.height}
+}
+
+func (hb *Hitbox) getTopLeft() Point {
+	return Point{x: hb.point.x - hb.width, y: hb.point.y - hb.height}
+}
+
+func (hb *Hitbox) getBottomRight() Point {
+	return Point{x: hb.point.x + hb.width, y: hb.point.y + hb.height}
+}
+
+// Collision detection algorithm
 // note that canvas top left (0,0), bottom right (CANVAS_WIDTH, CANVAS_HEIGHT)
 func (hb *Hitbox) collidesWith(other *Hitbox) bool {
-	hbTR := Point{x: hb.point.x + hb.width, y: hb.point.y - hb.height}
-	hbBL := Point{x: hb.point.x - hb.width, y: hb.point.y + hb.height}
-	otherTR := Point{x: other.point.x + other.width, y: other.point.y - other.height}
-	otherBL := Point{x: other.point.x - other.width, y: other.point.y + other.height}
+	hbTR := hb.getTopRight()
+	hbBL := hb.getBottomleft()
+	hbTL := hb.getTopLeft()
+	hbBR := hb.getBottomRight()
 
-	isOverlappingVertice := (hbTR.x >= otherBL.x && hbTR.y <= otherBL.y) &&
-		(hbBL.x >= otherTR.x && hbBL.y <= otherBL.y)
+	otherTR := other.getTopRight()
+	otherBL := other.getBottomleft()
+	otherTL := other.getTopLeft()
+	otherBR := other.getBottomRight()
+
+	isOverlappingVertice := ((hbTR.x >= otherBL.x && hbTR.y <= otherBL.y) &&
+		(hbBL.x <= otherTR.x && hbBL.y >= otherBL.y)) ||
+		((hbTL.x <= otherBR.x && hbTL.y <= otherBR.y) &&
+			(hbBR.x >= otherTL.x && hbBR.y >= otherTL.y))
 
 	return isOverlappingVertice
 }
@@ -119,6 +140,10 @@ func (hb *Hitbox) collidesWith(other *Hitbox) bool {
 type Point struct {
 	x int
 	y int
+}
+
+func (p Point) String() string {
+	return fmt.Sprintf("x: %d, y: %d", p.x, p.y)
 }
 
 type Projectile struct {
