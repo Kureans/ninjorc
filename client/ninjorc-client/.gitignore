@@ -7,7 +7,9 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 *.txt
+*.zip
 
+craftpix-net-323779-free-top-down-orc-game-character-pixel-art
 node_modules
 dist
 dist-ssr

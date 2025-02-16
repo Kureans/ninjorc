@@ -17,11 +17,11 @@ export class Game {
 
     run() {
         this.ticker.add((time) => {
-            // console.log("Running Game");
+            console.log("Running Game");
 
             //handling player's own orc
             this.playerController.updateOrc(time.deltaMS);
-
+            this.playerController.orc.setupSprite();
             //handling other orcs
         })
     }

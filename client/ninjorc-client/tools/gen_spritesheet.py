@@ -14,6 +14,8 @@ parser.add_argument('-yi', '--y_interval', default=0, type=int)
 parser.add_argument('-f', '--frame_count', type=int)
 parser.add_argument('-p', '--path', type=str)
 parser.add_argument('-ip', '--image_path', type=str)
+parser.add_argument('-w', '--image_width', type=int)
+parser.add_argument('-ht', '--image_height', type=int)
 
 sprite_size = 64
 args = parser.parse_args()
@@ -22,7 +24,7 @@ args = parser.parse_args()
 spritesheet_obj = {
     "meta": {
         "image": args.image_path,
-        "size": {"w": 512, "h": 256},
+        "size": {"w": args.image_width, "h": args.image_height},
         "scale": "1"
     }
 }
