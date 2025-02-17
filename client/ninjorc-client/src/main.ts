@@ -31,20 +31,25 @@ const assetPathsIdle = [
 
     document.body.appendChild(app.canvas);
     const manager = new AssetManager();
-    const textures = await manager.loadTextures(assetPathsAttack);
     const orc = new Orc(1, new Point(100, 100));
-    manager.loadSpritesFromTextures(textures, orc.attackSprites);
 
-    // const attackSprites = await manager.populateSprites(assetPathsAttack);
-    // const idleSprites = await manager.populateSprites(assetPathsIdle);
-    // orc.addAttackSprites(attackSprites);
-    // orc.addIdleSprites(await manager.populateSprites(assetPathsIdle));
-    // orc.idleSprites[0].scale = 2;
-    // orc.setupSprite();
-    // app.stage.addChild(orc);
-    // const controller = new PlayerController(1, orc);
-    // controller.setupInputHandler();
-    // const conn = new Connection();
-    // const game = new Game(app.ticker, conn, controller);
-    // game.run();
+    const attackSprite1 = await manager.populateSprite(assetPathsAttack[0]);
+    const attackSprite2 = await manager.populateSprite(assetPathsAttack[1]);
+    const attackSprite3 = await manager.populateSprite(assetPathsAttack[2]);
+    const attackSprite4 = await manager.populateSprite(assetPathsAttack[3]);
+
+    const idleSprite1 = await manager.populateSprite(assetPathsIdle[0]);
+    const idleSprite2 = await manager.populateSprite(assetPathsIdle[1]);
+    const idleSprite3 = await manager.populateSprite(assetPathsIdle[2]);
+    const idleSprite4 = await manager.populateSprite(assetPathsIdle[3]);
+
+    orc.addAttackSprites([attackSprite1, attackSprite2, attackSprite3, attackSprite4]);
+    orc.addIdleSprites([idleSprite1, idleSprite2, idleSprite3, idleSprite4]);
+    app.stage.addChild(orc);
+    orc.setDefaultSprite();
+    const controller = new PlayerController(1, orc);
+    controller.setupInputHandler();
+    const conn = new Connection();
+    const game = new Game(app.ticker, conn, controller);
+    game.run();
 })();

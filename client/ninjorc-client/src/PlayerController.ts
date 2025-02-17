@@ -76,21 +76,18 @@ export class PlayerController {
                 }
             }
             else if (event.key == "ArrowUp") {
-                this.orc.Direction = Direction.UP;
                 if (this.keyMap.get(Direction.UP)) {
                     this.keysCurrentlyPressed--;
                     this.keyMap.set(Direction.UP, false);
                 }
             }
             else if (event.key == "ArrowLeft") {
-                this.orc.Direction = Direction.LEFT;
                 if (this.keyMap.get(Direction.LEFT)) {
                     this.keysCurrentlyPressed--;
                     this.keyMap.set(Direction.LEFT, false);
                 }
             }
             else if (event.key == "ArrowRight") {
-                this.orc.Direction = Direction.RIGHT;
                 if (this.keyMap.get(Direction.RIGHT)) {
                     this.keysCurrentlyPressed--;
                     this.keyMap.set(Direction.RIGHT, false);
@@ -98,7 +95,7 @@ export class PlayerController {
             }
 
             if (this.keysCurrentlyPressed == 0) {
-                this.orc.resetState();
+                this.orc.resetDirection();
             }
         })
     }
