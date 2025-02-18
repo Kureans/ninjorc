@@ -19,6 +19,13 @@ const assetPathsIdle = [
     'sprites/orc_idle_right.json',
 ];
 
+const assetPathsRun = [
+    'sprites/orc_run_up.json',
+    'sprites/orc_run_down.json',
+    'sprites/orc_run_left.json',
+    'sprites/orc_run_right.json',
+];
+
 (async () => {
     const app = new Application();
     await app.init({
@@ -43,8 +50,14 @@ const assetPathsIdle = [
     const idleSprite3 = await manager.populateSprite(assetPathsIdle[2]);
     const idleSprite4 = await manager.populateSprite(assetPathsIdle[3]);
 
+    const runSprite1 = await manager.populateSprite(assetPathsRun[0]);
+    const runSprite2 = await manager.populateSprite(assetPathsRun[1]);
+    const runSprite3 = await manager.populateSprite(assetPathsRun[2]);
+    const runSprite4 = await manager.populateSprite(assetPathsRun[3]);
+    
     orc.addAttackSprites([attackSprite1, attackSprite2, attackSprite3, attackSprite4]);
     orc.addIdleSprites([idleSprite1, idleSprite2, idleSprite3, idleSprite4]);
+    orc.addRunSprites([runSprite1, runSprite2, runSprite3, runSprite4]);
     app.stage.addChild(orc);
     orc.setDefaultSprite();
     const controller = new PlayerController(1, orc);
