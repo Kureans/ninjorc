@@ -1,15 +1,16 @@
-import { Ticker } from "pixi.js";
+import { Container, ContainerChild, Ticker } from "pixi.js";
 import { Orc } from "./Orc";
 import { Connection } from "./Connection";
 import { PlayerController } from "./PlayerController";
+import { Projectile } from "./Projectile";
 
 export class Game {
     gamestate: GameState;
     ticker: Ticker;
     conn: Connection;
     playerController: PlayerController;
-    constructor(ticker: Ticker, conn: Connection, controller: PlayerController) {
-        this.gamestate = new GameState();
+    constructor(ticker: Ticker, conn: Connection, controller: PlayerController, stage: Container<ContainerChild>) {
+        this.gamestate = new GameState(stage);
         this.ticker = ticker;
         this.conn = conn;
         this.playerController = controller;
@@ -21,17 +22,29 @@ export class Game {
 
             //handling player's own orc
             this.playerController.updateOrc(time.deltaMS);
+            this.gamestate.update(time.deltaMS);
             // this.playerController.orc.setupSprite();
             //handling other orcs
         })
     }
 }
 
-class GameState {
-    playerOrc: Orc;
-    otherOrcs: Orc[];
+export class GameState {
+    otherOrcs: Orc[] = [];
+    projectiles: Projectile[] = [];
+    stageRef: Container<ContainerChild>;
 
-    constructor() {
+    constructor(stage: Container<ContainerChild>) {
+        this.stageRef = stage;
+    }
 
+    update(deltaTime: number) {
+        for (let i = 0; i < this.otherOrcs.length; i++) {
+            this.otherOrcs[i].update(deltaTime);
+        }
+        for (let i = 0; i < this.projectiles.length; i++) {
+            console.log("Projectile " + i + "Updating");
+            this.projectiles[i].update(deltaTime);
+        }
     }
 }

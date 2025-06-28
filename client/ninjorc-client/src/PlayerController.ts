@@ -20,7 +20,7 @@ export class PlayerController {
     }
 
     setupInputHandler() {
-        // TO-DO: get keyboard events only on app element instead of document
+        // TODO: get keyboard events only on app element instead of document
         // const canvas = document.getElementById("app");
         // if (canvas == null) {
         //     throw new Error("Canvas element doesn't exist.")

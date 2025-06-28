@@ -1,4 +1,6 @@
 import { AnimatedSprite, Container, Sprite } from "pixi.js";
+import { GameState } from "./Game";
+import { Projectile } from "./Projectile";
 
 const ORC_SPEED = 0.5;
 export const MAP_WIDTH = 960;
@@ -15,7 +17,9 @@ export class Orc extends Container {
   idleSprites: AnimatedSprite[] = [];
   attackSprites: AnimatedSprite[] = [];
   runSprites: AnimatedSprite[] = [];
+  fireballSprites: AnimatedSprite[] = [];
   currentSprite!: AnimatedSprite;
+  gamestateRef!: GameState;
 
   constructor(id: number, point: Point) {
     super();
@@ -58,6 +62,16 @@ export class Orc extends Container {
         this.IsSwinging = false;
         this.Action = Action.NONE;
       };
+    }
+  }
+
+  addFireballSprites(sprites: AnimatedSprite[]) {
+    this.fireballSprites = sprites;
+    for (let i = 0; i < this.fireballSprites.length; i++) {
+      this.fireballSprites[i].anchor.set(0.5);
+      this.fireballSprites[i].scale.set(2);
+      this.fireballSprites[i].animationSpeed = 0.2;
+      this.fireballSprites[i].loop = true;
     }
   }
 
@@ -110,6 +124,10 @@ export class Orc extends Container {
           : this.runSprites[currentDirection];
     } else if (this.Action == Action.MELEE) {
       this.currentSprite = this.attackSprites[currentDirection];
+    } else if (this.Action == Action.PROJECTILE) {
+      console.log(this.gamestateRef);
+      this.gamestateRef.projectiles.push(new Projectile(1, new Point(this.position.x, this.position.y), currentDirection, this.gamestateRef.stageRef));
+      this.Action = Action.NONE;
     }
 
     this.currentSprite.play();
@@ -165,6 +183,10 @@ function getActionString(action: Action): string {
       return "none";
     case Action.MELEE:
       return "melee";
+    case Action.PROJECTILE:
+      return "fireball";
+    case Action.BLINK:
+      return "blink";
   }
 }
 

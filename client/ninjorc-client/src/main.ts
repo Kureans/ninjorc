@@ -26,6 +26,13 @@ const assetPathsRun = [
     'sprites/orc_run_right.json',
 ];
 
+const assetPathsFireball = [
+    'sprites/fireball_up.json',
+    'sprites/fireball_down.json',
+    'sprites/fireball_left.json',
+    'sprites/fireball_right.json',
+];
+
 (async () => {
     const app = new Application();
     await app.init({
@@ -54,15 +61,23 @@ const assetPathsRun = [
     const runSprite2 = await manager.populateSprite(assetPathsRun[1]);
     const runSprite3 = await manager.populateSprite(assetPathsRun[2]);
     const runSprite4 = await manager.populateSprite(assetPathsRun[3]);
-    
+
+    const fireballSprite1 = await manager.populateSprite(assetPathsFireball[0]);
+    const fireballSprite2 = await manager.populateSprite(assetPathsFireball[1]);
+    const fireballSprite3 = await manager.populateSprite(assetPathsFireball[2]);
+    const fireballSprite4 = await manager.populateSprite(assetPathsFireball[3]);
+
     orc.addAttackSprites([attackSprite1, attackSprite2, attackSprite3, attackSprite4]);
     orc.addIdleSprites([idleSprite1, idleSprite2, idleSprite3, idleSprite4]);
     orc.addRunSprites([runSprite1, runSprite2, runSprite3, runSprite4]);
+    orc.addFireballSprites([fireballSprite1,fireballSprite2,fireballSprite3,fireballSprite4]);
     app.stage.addChild(orc);
     orc.setDefaultSprite();
     const controller = new PlayerController(1, orc);
     controller.setupInputHandler();
     const conn = new Connection();
-    const game = new Game(app.ticker, conn, controller);
+    const game = new Game(app.ticker, conn, controller, app.stage);
+    console.log(game.gamestate);
+    orc.gamestateRef = game.gamestate;
     game.run();
 })();
