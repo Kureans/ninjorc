@@ -17,7 +17,7 @@ parser.add_argument('-ip', '--image_path', type=str)
 parser.add_argument('-w', '--image_width', type=int)
 parser.add_argument('-ht', '--image_height', type=int)
 
-sprite_size = 64
+sprite_size = 32
 args = parser.parse_args()
 # image_name = os.path.basename(args.image_path)
 

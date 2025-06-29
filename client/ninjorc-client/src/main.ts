@@ -2,7 +2,7 @@ import { Application, Assets, AnimatedSprite} from 'pixi.js';
 import { PlayerController } from './PlayerController';
 import { MAP_HEIGHT, MAP_WIDTH, Orc, Point } from './Orc';
 import { Game } from './Game';
-import { Connection } from './Connection';
+import { Connection, Packet } from './Connection';
 import { AssetManager } from './AssetManager';
 
 const assetPathsAttack = [
@@ -33,7 +33,39 @@ const assetPathsFireball = [
     'sprites/fireball_right.json',
 ];
 
-(async () => {
+const uiRoot = document.getElementById("lobby")!;
+const startButton = document.getElementById("start-button");
+startButton?.addEventListener("click", onStart);
+
+export function onStart() {
+    const socket = new WebSocket("ws://localhost:8080");
+    const readyMsg = {
+        "Id": 1,
+        "Type": "L",
+        "Size": 1,
+        "Data": [{"Lobby":{"IsReady": true}}]
+    }
+    
+    socket.onopen = (event) => {
+        socket.send(JSON.stringify(readyMsg));
+    }
+    socket.onmessage = (event) => {
+        console.log(event.data);
+        const packet: Packet = JSON.parse(event.data);
+        switch (packet.Type) {
+        case 'L':
+            console.log("Notification that game is starting");
+            break;
+        default:
+            console.log("Something else");
+        }
+    }
+
+    document.body.removeChild(uiRoot);
+    // startGame();
+}
+
+async function startGame() {
     const app = new Application();
     await app.init({
         resolution: window.devicePixelRatio || 1,
@@ -62,15 +94,9 @@ const assetPathsFireball = [
     const runSprite3 = await manager.populateSprite(assetPathsRun[2]);
     const runSprite4 = await manager.populateSprite(assetPathsRun[3]);
 
-    const fireballSprite1 = await manager.populateSprite(assetPathsFireball[0]);
-    const fireballSprite2 = await manager.populateSprite(assetPathsFireball[1]);
-    const fireballSprite3 = await manager.populateSprite(assetPathsFireball[2]);
-    const fireballSprite4 = await manager.populateSprite(assetPathsFireball[3]);
-
     orc.addAttackSprites([attackSprite1, attackSprite2, attackSprite3, attackSprite4]);
     orc.addIdleSprites([idleSprite1, idleSprite2, idleSprite3, idleSprite4]);
     orc.addRunSprites([runSprite1, runSprite2, runSprite3, runSprite4]);
-    orc.addFireballSprites([fireballSprite1,fireballSprite2,fireballSprite3,fireballSprite4]);
     app.stage.addChild(orc);
     orc.setDefaultSprite();
     const controller = new PlayerController(1, orc);
@@ -80,4 +106,4 @@ const assetPathsFireball = [
     console.log(game.gamestate);
     orc.gamestateRef = game.gamestate;
     game.run();
-})();
+};

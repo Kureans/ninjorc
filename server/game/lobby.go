@@ -69,6 +69,7 @@ func (l *Lobby) run() {
 		for !(l.hasEnoughPlayers() && l.arePlayersReady()) {
 		}
 		print("enough players and all ready, starting game\n")
+		l.notifyPlayers()
 		l.startGame()
 		print("game ended, back to lobby")
 		l.resetReadyStatus()
@@ -90,6 +91,17 @@ func (l *Lobby) arePlayersReady() bool {
 func (l *Lobby) resetReadyStatus() {
 	for _, player := range l.players {
 		player.isReady = false
+	}
+}
+
+func (l *Lobby) notifyPlayers() {
+	payloadArr := make([]PayloadUnion, 1)
+	payloadArr[0].Lobby.canStartGame = true
+	notificationPacket := Packet{
+		Id: 1, Type: "L", Size: 1, Data: payloadArr,
+	}
+	for _, player := range l.players {
+		player.conn.sendPacket(notificationPacket)
 	}
 }
 

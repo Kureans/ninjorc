@@ -24,10 +24,16 @@ func (p *Player) handleLobbyInputs(lobbyCh <-chan LobbyInput) {
 func (p *Player) routeInputs() {
 	for {
 		packet := p.conn.getNextPacket()
-		fmt.Printf("ID: %d, Type: %s\n", packet.Id, packet.Type)
+		fmt.Printf("ID: %d, Type: %s, Size: %d\n", packet.Id, packet.Type, packet.Size)
 		switch packet.Type {
 		case "L":
 			print("Lobby\n")
+			if p.isReady {
+				print("Player is Ready")
+			} else {
+				print("Player is not ready")
+			}
+
 			p.isReady = packet.Data[0].Lobby.IsReady
 		case "G":
 			print("Game\n")
@@ -49,7 +55,10 @@ func (p *Player) routeInputs() {
 
 func (p *Player) handleGameResponses(responseCh <-chan GameResponse) {
 	for response := range responseCh {
-		p.conn.sendPacket(response)
+		payloadArr := make([]PayloadUnion, 1)
+		payloadArr[0].State = response
+		packet := Packet{p.id, "G", len(response.Orcs), payloadArr}
+		p.conn.sendPacket(packet)
 	}
 }
 
