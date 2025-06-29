@@ -1,5 +1,7 @@
 import { AnimatedSprite, Container, ContainerChild } from "pixi.js";
 import { AssetManager } from "./AssetManager";
+import { Direction } from "./Math/Direction";
+import { Point } from "./Math/Point";
 
 const PROJECTILE_SPEED = 0.1;
 export const MAP_WIDTH = 960;
@@ -78,57 +80,4 @@ export class Projectile extends Container {
 //     this.currentSprite.play();
 //     this.addChild(this.currentSprite);
 //   }
-}
-
-export class Point {
-  x: number;
-  y: number;
-
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
-  }
-}
-
-export enum Direction {
-  UP,
-  DOWN,
-  LEFT,
-  RIGHT,
-  NONE,
-}
-
-function getDirectionString(dir: Direction): string {
-  switch (dir) {
-    case Direction.UP:
-      return "up";
-    case Direction.DOWN:
-      return "down";
-    case Direction.LEFT:
-      return "left";
-    case Direction.RIGHT:
-      return "right";
-    case Direction.NONE:
-      return "none";
-  }
-}
-
-function getActionString(action: Action): string {
-  switch (action) {
-    case Action.NONE:
-      return "none";
-    case Action.MELEE:
-      return "melee";
-    case Action.PROJECTILE:
-      return "fireball";
-    case Action.BLINK:
-      return "blink";
-  }
-}
-
-export enum Action {
-  NONE,
-  MELEE,
-  PROJECTILE,
-  BLINK,
 }

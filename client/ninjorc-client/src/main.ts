@@ -1,5 +1,5 @@
-import { Application, Assets, AnimatedSprite} from 'pixi.js';
-import { MAP_HEIGHT, MAP_WIDTH, Orc, Point } from './Orc';
+import { Application } from 'pixi.js';
+import { MAP_HEIGHT, MAP_WIDTH } from './Orc';
 import { Game } from './Game';
 import { Connection, Packet } from './Connection';
 import { AssetManager } from './AssetManager';

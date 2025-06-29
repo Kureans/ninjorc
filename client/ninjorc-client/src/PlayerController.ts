@@ -1,4 +1,5 @@
-import { Action, Direction, Orc } from "./Orc";
+import { Direction } from "./Math/Direction";
+import { Action, Orc } from "./Orc";
 
 export class PlayerController {
     id: number;

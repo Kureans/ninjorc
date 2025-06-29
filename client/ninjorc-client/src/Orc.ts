@@ -1,7 +1,9 @@
-import { AnimatedSprite, Container, Sprite } from "pixi.js";
+import { AnimatedSprite, Container } from "pixi.js";
 import { GameState } from "./Game";
 import { Projectile } from "./Projectile";
 import { AssetManager } from "./AssetManager";
+import { Direction } from "./Math/Direction";
+import { Point } from "./Math/Point";
 
 const ORC_SPEED = 0.5;
 export const MAP_WIDTH = 960;
@@ -173,38 +175,7 @@ export class Orc extends Container {
   }
 }
 
-export class Point {
-  x: number;
-  y: number;
 
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
-  }
-}
-
-export enum Direction {
-  UP,
-  DOWN,
-  LEFT,
-  RIGHT,
-  NONE,
-}
-
-function getDirectionString(dir: Direction): string {
-  switch (dir) {
-    case Direction.UP:
-      return "up";
-    case Direction.DOWN:
-      return "down";
-    case Direction.LEFT:
-      return "left";
-    case Direction.RIGHT:
-      return "right";
-    case Direction.NONE:
-      return "none";
-  }
-}
 
 function getActionString(action: Action): string {
   switch (action) {

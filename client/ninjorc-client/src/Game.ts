@@ -1,8 +1,9 @@
 import { Container, ContainerChild, Ticker } from "pixi.js";
-import { Orc, Point } from "./Orc";
+import { Orc } from "./Orc";
 import { Connection } from "./Connection";
 import { PlayerController } from "./PlayerController";
 import { Projectile } from "./Projectile";
+import { Point } from "./Math/Point";
 
 export class Game {
     gamestate: GameState;
