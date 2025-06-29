@@ -1,11 +1,17 @@
-import { AnimatedSprite, Assets, Sprite, Texture } from "pixi.js";
+import { AnimatedSprite, Assets } from "pixi.js";
+import assetPathsJson from '../public/asset_paths.json' with { type: 'json'};
+
+type AssetPaths = {
+  [key: string]: string[];
+};
 
 export class AssetManager {
     areSpritesReady: boolean = false;
-    static spriteMap: Record<string, Texture> = {};
+    static assetPaths: AssetPaths = assetPathsJson;
 
-    async populateSprite(jsonAssetPath: string): Promise<AnimatedSprite> {
-        const sheet = await Assets.load(jsonAssetPath);
+    static populateSprite(jsonAssetPath: string): AnimatedSprite {
+        console.log(jsonAssetPath);
+        const sheet = Assets.get(jsonAssetPath);
         const jsonAssetName = this.getNameFromPath(jsonAssetPath);
         // TO-DO: Add error handling
         let s: AnimatedSprite;
@@ -14,30 +20,19 @@ export class AssetManager {
         } catch (error) {
             console.log(error);
         }
-
-        AssetManager.spriteMap[jsonAssetPath] = sheet.animations[jsonAssetName];
  
         return s;
     }
 
-    loadTextures(jsonAssetPaths: string[]): Promise<Record<string, Texture>> {
-        let spriteNames: string[] = [];
-        jsonAssetPaths.forEach((path) => {
-            const name = this.getNameFromPath(path);
-            Assets.add({alias: name, src: path});
-            spriteNames.push(name);
-        });
-        return Assets.load(spriteNames);
-    }
-
-    loadSpritesFromTextures(textures: Record<string, Texture>, sprites: AnimatedSprite[]) {
-        console.log(textures);
-        for (const key in textures) {
-            Sprite.from(textures[key]);
+    static async preloadTextures() {
+        for (const [key, spritePaths] of Object.entries(AssetManager.assetPaths)) {
+            for (const path of spritePaths) {
+                await Assets.load(path);
+            }
         }
     }
 
-    private getNameFromPath(path: string): string {
+    private static getNameFromPath(path: string): string {
         return path.split('/')
                 .slice(-1)[0]
                 .split('.')[0];

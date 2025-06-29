@@ -1,6 +1,7 @@
 import { AnimatedSprite, Container, Sprite } from "pixi.js";
 import { GameState } from "./Game";
 import { Projectile } from "./Projectile";
+import { AssetManager } from "./AssetManager";
 
 const ORC_SPEED = 0.5;
 export const MAP_WIDTH = 960;
@@ -28,6 +29,34 @@ export class Orc extends Container {
     this.IsSwinging = false;
     this.position.x = point.x;
     this.position.y = point.y;
+  }
+
+  populateSprites() {
+    const spriteKeys = ["attack", "idle", "run"];
+    for (const key of spriteKeys) {
+      console.log(key)
+      const spriteArray = []
+      for (const path of AssetManager.assetPaths[key]) {
+        spriteArray.push(AssetManager.populateSprite(path));
+      }
+      this.addSprites(key, spriteArray);
+    }
+  }
+
+  addSprites(key: string, sprites: AnimatedSprite[]) {
+    switch (key) {
+      case "attack":
+        this.addAttackSprites(sprites);
+        break;
+      case "idle":
+        this.addIdleSprites(sprites);
+        break;
+      case "run":
+        this.addRunSprites(sprites);
+        break;
+      default:
+        console.error("Could not add sprites with invalid key ", key);
+    }
   }
 
   addIdleSprites(sprites: AnimatedSprite[]) {

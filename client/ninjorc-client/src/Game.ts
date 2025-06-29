@@ -1,5 +1,5 @@
 import { Container, ContainerChild, Ticker } from "pixi.js";
-import { Orc } from "./Orc";
+import { Orc, Point } from "./Orc";
 import { Connection } from "./Connection";
 import { PlayerController } from "./PlayerController";
 import { Projectile } from "./Projectile";
@@ -9,10 +9,17 @@ export class Game {
     ticker: Ticker;
     conn: Connection;
     playerController: PlayerController;
-    constructor(ticker: Ticker, conn: Connection, controller: PlayerController, stage: Container<ContainerChild>) {
+    constructor(ticker: Ticker, conn: Connection, stage: Container<ContainerChild>) {
         this.gamestate = new GameState(stage);
         this.ticker = ticker;
         this.conn = conn;
+        const orc = new Orc(1, new Point(100, 100));
+        orc.populateSprites();
+        orc.setDefaultSprite();
+        orc.gamestateRef = this.gamestate;
+        stage.addChild(orc);
+        const controller = new PlayerController(1, orc);
+        controller.setupInputHandler();
         this.playerController = controller;
     }
 

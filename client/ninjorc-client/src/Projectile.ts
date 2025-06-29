@@ -1,4 +1,4 @@
-import { AnimatedSprite, Container, ContainerChild, Sprite } from "pixi.js";
+import { AnimatedSprite, Container, ContainerChild } from "pixi.js";
 import { AssetManager } from "./AssetManager";
 
 const PROJECTILE_SPEED = 0.1;
@@ -20,7 +20,7 @@ export class Projectile extends Container {
     this.position.y = point.y;
     this.Direction = dir;
     const assetPath = "sprites/fireball_right.json";
-    this.currentSprite = new AnimatedSprite(AssetManager.spriteMap[assetPath]);
+    this.currentSprite = AssetManager.populateSprite(assetPath);
     console.log(this.currentSprite);
     this.addChild(this.currentSprite);
     this.currentSprite.anchor.set(0.5);
