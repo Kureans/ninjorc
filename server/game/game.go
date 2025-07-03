@@ -1,6 +1,7 @@
 package game
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -24,8 +25,8 @@ const (
 	MAP_WIDTH        = 1500
 	MAP_HEIGHT       = 700
 
-	TIME_UNIT_MS_DEV  = 1000
-	TIME_UNIT_MS_PROD = 16
+	TIME_UNIT_MS_DEV  = 1000 // 1 tick
+	TIME_UNIT_MS_PROD = 15.6 // 64 tick
 
 	SCORE_TO_WIN = 2
 )
@@ -109,6 +110,7 @@ func (g *Game) run() {
 }
 
 type GameState struct {
+	orcCount    int
 	scores      []int
 	orcs        []Orc // use idx of orcs array as their ID
 	projectiles []Projectile
@@ -116,15 +118,46 @@ type GameState struct {
 }
 
 func (gs *GameState) init(players *[]*Player) {
-	gs.orcs = make([]Orc, len(*players))
-	gs.scores = make([]int, len(*players))
+	gs.orcCount = len(*players)
+	gs.orcs = make([]Orc, gs.orcCount)
+	gs.scores = make([]int, gs.orcCount)
 	gs.meleeSwings = make([]MeleeSwing, 0)
+	idToOrcLocations := make(map[int]Point, gs.orcCount)
+
+	for idx, _ := range *players {
+		idToOrcLocations[idx] = Point{X: 50 + 150*idx, Y: 50 + 150*idx}
+	}
+
 	for idx, player := range *players {
 		gs.orcs[idx] = Orc{}
-		gs.orcs[idx].init(idx, 50+200*idx, 50+200*idx, Direction_NONE)
+		gs.orcs[idx].initWithPoint(idx, idToOrcLocations[idx], Direction_NONE)
+
+		//TODO: Add util functions to encapsulate packet creation
+		ctx := GameInitContext{
+			OrcCount:         gs.orcCount,
+			ClientId:         idx,
+			IdToOrcLocations: idToOrcLocations,
+		}
+		jsonData, err := json.Marshal(ctx)
+		if err != nil {
+			fmt.Print("Error Marshalling, ", err)
+			return
+		}
+		fmt.Println(string(jsonData))
+		payloadArr := make([]interface{}, 1)
+		payloadArr[0] = ctx
+		pkt := Packet{
+			Id:   idx,
+			Type: "A",
+			Size: 1,
+			Data: payloadArr,
+		}
+		printPayload(&pkt)
+		player.conn.sendPacket(pkt)
 		player.controller.orc = &gs.orcs[idx]
 		go player.controller.handleGameInputs()
 	}
+
 }
 
 type Orc struct {
@@ -137,10 +170,10 @@ type Orc struct {
 	IsSwinging bool
 }
 
-func (o *Orc) init(id int, x int, y int, dir Direction) {
+func (o *Orc) init(id int, X int, Y int, dir Direction) {
 	o.Id = id
-	o.Point.x = x
-	o.Point.y = y
+	o.Point.X = X
+	o.Point.Y = Y
 	o.Health = ORC_HEALTH
 
 	// when we update location, hitbox point also updated
@@ -153,20 +186,24 @@ func (o *Orc) init(id int, x int, y int, dir Direction) {
 	o.IsSwinging = false
 }
 
+func (o *Orc) initWithPoint(id int, point Point, dir Direction) {
+	o.init(id, point.X, point.Y, dir)
+}
+
 func (o *Orc) updateLocation(direction Direction) {
 	switch direction {
 	case Direction_UP:
 		print("going up")
-		o.Point.y = max(0, o.Point.y-ORC_SPEED)
+		o.Point.Y = max(0, o.Point.Y-ORC_SPEED)
 	case Direction_DOWN:
 		print("going down")
-		o.Point.y = min(MAP_HEIGHT, o.Point.y+ORC_SPEED)
+		o.Point.Y = min(MAP_HEIGHT, o.Point.Y+ORC_SPEED)
 	case Direction_LEFT:
 		print("going left")
-		o.Point.x = max(0, o.Point.x-ORC_SPEED)
+		o.Point.X = max(0, o.Point.X-ORC_SPEED)
 	case Direction_RIGHT:
 		print("going right")
-		o.Point.x = min(MAP_WIDTH, o.Point.x+ORC_SPEED)
+		o.Point.X = min(MAP_WIDTH, o.Point.X+ORC_SPEED)
 	}
 	printLocation(o)
 }
@@ -216,13 +253,13 @@ func (o *Orc) getSwingLocation() Point {
 	swingPoint := o.Point
 	switch o.Direction {
 	case Direction_UP:
-		swingPoint.y += o.hitbox.height/2 + ORC_SWING_HEIGHT_VERTICAL/2
+		swingPoint.Y += o.hitbox.height/2 + ORC_SWING_HEIGHT_VERTICAL/2
 	case Direction_DOWN:
-		swingPoint.y += o.hitbox.height/2 + ORC_SWING_HEIGHT_VERTICAL/2
+		swingPoint.Y += o.hitbox.height/2 + ORC_SWING_HEIGHT_VERTICAL/2
 	case Direction_LEFT:
-		swingPoint.x += o.hitbox.width/2 + ORC_SWING_HEIGHT_HORIZONTAL/2
+		swingPoint.X += o.hitbox.width/2 + ORC_SWING_HEIGHT_HORIZONTAL/2
 	case Direction_RIGHT:
-		swingPoint.x += o.hitbox.width/2 + ORC_SWING_HEIGHT_HORIZONTAL/2
+		swingPoint.X += o.hitbox.width/2 + ORC_SWING_HEIGHT_HORIZONTAL/2
 	}
 	return swingPoint
 }
@@ -260,19 +297,19 @@ func (hb *Hitbox) init(point Point, height int, width int) {
 }
 
 func (hb *Hitbox) getTopRight() Point {
-	return Point{x: hb.point.x + hb.width, y: hb.point.y - hb.height}
+	return Point{X: hb.point.X + hb.width, Y: hb.point.Y - hb.height}
 }
 
 func (hb *Hitbox) getBottomleft() Point {
-	return Point{x: hb.point.x - hb.width, y: hb.point.y + hb.height}
+	return Point{X: hb.point.X - hb.width, Y: hb.point.Y + hb.height}
 }
 
 func (hb *Hitbox) getTopLeft() Point {
-	return Point{x: hb.point.x - hb.width, y: hb.point.y - hb.height}
+	return Point{X: hb.point.X - hb.width, Y: hb.point.Y - hb.height}
 }
 
 func (hb *Hitbox) getBottomRight() Point {
-	return Point{x: hb.point.x + hb.width, y: hb.point.y + hb.height}
+	return Point{X: hb.point.X + hb.width, Y: hb.point.Y + hb.height}
 }
 
 // Collision detection algorithm
@@ -288,21 +325,21 @@ func (hb *Hitbox) collidesWith(other *Hitbox) bool {
 	otherTL := other.getTopLeft()
 	otherBR := other.getBottomRight()
 
-	isOverlappingVertice := ((hbTR.x >= otherBL.x && hbTR.y <= otherBL.y) &&
-		(hbBL.x <= otherTR.x && hbBL.y >= otherBL.y)) ||
-		((hbTL.x <= otherBR.x && hbTL.y <= otherBR.y) &&
-			(hbBR.x >= otherTL.x && hbBR.y >= otherTL.y))
+	isOverlappingVertice := ((hbTR.X >= otherBL.X && hbTR.Y <= otherBL.Y) &&
+		(hbBL.X <= otherTR.X && hbBL.Y >= otherBL.Y)) ||
+		((hbTL.X <= otherBR.X && hbTL.Y <= otherBR.Y) &&
+			(hbBR.X >= otherTL.X && hbBR.Y >= otherTL.Y))
 
 	return isOverlappingVertice
 }
 
 type Point struct {
-	x int
-	y int
+	X int
+	Y int
 }
 
 func (p Point) String() string {
-	return fmt.Sprintf("x: %d, y: %d", p.x, p.y)
+	return fmt.Sprintf("X: %d, Y: %d", p.X, p.Y)
 }
 
 type Projectile struct {
@@ -310,5 +347,5 @@ type Projectile struct {
 }
 
 func printLocation(o *Orc) {
-	fmt.Printf("x: %d, y: %d\n", o.Point.x, o.Point.y)
+	fmt.Printf("X: %d, Y: %d\n", o.Point.X, o.Point.Y)
 }

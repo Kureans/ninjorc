@@ -33,14 +33,23 @@ func (p *Player) routeInputs() {
 			} else {
 				print("Player is not ready")
 			}
-
-			p.isReady = packet.Data[0].Lobby.IsReady
+			l, ok := packet.Data[0].(LobbyInput)
+			if ok {
+				p.isReady = l.IsReady
+			} else {
+				print("Value is not a LobbyInput")
+			}
 		case "G":
 			print("Game\n")
 			gameInputs := make([]GameInput, packet.Size)
 
 			for idx, item := range packet.Data {
-				gameInputs[idx] = item.Game
+				item, ok := item.(GameInput)
+				if ok {
+					gameInputs[idx] = item
+				} else {
+					print("Value is not a GameInput")
+				}
 			}
 			p.conn.gameCh <- GameInputBatch{
 				size:   packet.Size,
@@ -55,8 +64,8 @@ func (p *Player) routeInputs() {
 
 func (p *Player) handleGameResponses(responseCh <-chan GameResponse) {
 	for response := range responseCh {
-		payloadArr := make([]PayloadUnion, 1)
-		payloadArr[0].State = response
+		payloadArr := make([]interface{}, 1)
+		payloadArr[0] = response
 		packet := Packet{p.id, "G", len(response.Orcs), payloadArr}
 		p.conn.sendPacket(packet)
 	}

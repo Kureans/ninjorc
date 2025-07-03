@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -22,16 +23,6 @@ func (conn *Connection) getNextPacket() Packet {
 	return packet
 }
 
-// func (conn *Connection) sendPacket(response GameResponse) {
-// 	for _, orc := range response.Orcs {
-// 		fmt.Printf("ID: %d, Point: %v\n", orc.Id, orc.Point)
-// 	}
-// 	err := conn.socket.WriteJSON(response)
-// 	if err != nil {
-// 		log.Fatal(err)
-// 	}
-// }
-
 func (conn *Connection) sendPacket(packet Packet) {
 	err := conn.socket.WriteJSON(packet)
 	if err != nil {
@@ -43,49 +34,34 @@ type Packet struct {
 	Id   int
 	Type string
 	Size int
-	Data []PayloadUnion
+	Data []interface{}
+}
+
+func printPayload(p *Packet) {
+	switch p.Type {
+	case "A":
+		ctx, ok := p.Data[0].(GameInitContext)
+		if !ok {
+			print("Value is not a GameInitContext")
+		}
+		for idx, point := range ctx.IdToOrcLocations {
+			fmt.Printf("Orc %d: x: %d, y: %d\n", idx, point.X, point.Y)
+		}
+	case "L":
+		li, ok := p.Data[0].(LobbyInput)
+		if !ok {
+			print("Value is not a LobbyInput")
+		}
+		fmt.Print("Can Start Game? ", li.CanStartGame)
+		fmt.Print("Is Ready? ", li.IsReady)
+	case "G":
+		fmt.Print("Game Payload TODO")
+	}
 }
 
 type PayloadUnion struct {
-	Lobby LobbyInput
-	Game  GameInput
-	State GameResponse
+	Lobby   LobbyInput
+	Game    GameInput
+	State   GameResponse
+	Context GameInitContext
 }
-
-type LobbyInput struct {
-	IsReady      bool
-	canStartGame bool
-}
-
-type GameInput struct {
-	Direction Direction
-	Action    Action
-}
-
-type GameInputBatch struct {
-	size   int
-	inputs []GameInput
-}
-
-type GameResponse struct {
-	Orcs []Orc
-}
-
-type Direction int8
-
-const (
-	Direction_NONE Direction = iota
-	Direction_UP
-	Direction_DOWN
-	Direction_LEFT
-	Direction_RIGHT
-)
-
-type Action int8
-
-const (
-	Action_NONE Action = iota
-	Action_MELEE
-	Action_PROJECTILE
-	Action_BLINK
-)

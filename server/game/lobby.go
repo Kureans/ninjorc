@@ -44,6 +44,7 @@ func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	player := &Player{
+		id:      len(m.lobbies[0].players) + 1,
 		isReady: true,
 		conn:    conn,
 		//init orc later when game starts
@@ -95,14 +96,16 @@ func (l *Lobby) resetReadyStatus() {
 }
 
 func (l *Lobby) notifyPlayers() {
-	payloadArr := make([]PayloadUnion, 1)
-	payloadArr[0].Lobby.canStartGame = true
+	payloadArr := make([]interface{}, 1)
+	payloadArr[0] = LobbyInput{CanStartGame: true}
 	notificationPacket := Packet{
 		Id: 1, Type: "L", Size: 1, Data: payloadArr,
 	}
-	for _, player := range l.players {
+	for idx, player := range l.players {
+		notificationPacket.Id = idx
 		player.conn.sendPacket(notificationPacket)
 	}
+
 }
 
 func (l *Lobby) startGame() {
