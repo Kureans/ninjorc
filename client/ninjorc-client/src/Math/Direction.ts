@@ -1,9 +1,9 @@
 export enum Direction {
+  NONE,
   UP,
   DOWN,
   LEFT,
   RIGHT,
-  NONE,
 }
 
 export function getDirectionString(dir: Direction): string {

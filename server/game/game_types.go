@@ -1,9 +1,13 @@
 package game
 
 // REMEMBER TYPES SENT OVER THE WIRE VIA JSON NEED TO HAVE PROPERTIES CAPITALISED
-type LobbyInput struct {
-	IsReady      bool
+
+type LobbyInputServer struct {
 	CanStartGame bool
+}
+
+type LobbyInputClient struct {
+	IsReady bool
 }
 
 type GameInput struct {

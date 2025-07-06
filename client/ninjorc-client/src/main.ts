@@ -1,8 +1,9 @@
 import { Application } from 'pixi.js';
 import { MAP_HEIGHT, MAP_WIDTH } from './Orc';
 import { Game } from './Game';
-import { Connection, Packet } from './Connection';
+import { Connection, GameInitContext, Packet } from './Connection';
 import { AssetManager } from './AssetManager';
+import { Option, None } from './types/Option';
 
 const uiRoot = document.getElementById("lobby")!;
 const startButton = document.getElementById("start-button");
@@ -10,34 +11,19 @@ startButton?.addEventListener("click", onStart);
 await AssetManager.preloadTextures(); // loads textures into memory/cache
 
 export function onStart() {
-    const socket = new WebSocket("ws://localhost:8080");
-    const readyMsg = {
+    const conn = new Connection();
+    const readyMsg: Packet = {
         "Id": 1,
         "Type": "L",
         "Size": 1,
-        "Data": [{"Lobby":{"IsReady": true}}]
+        "Data": [{"IsReady": true}]
     }
-    
-    socket.onopen = (event) => {
-        socket.send(JSON.stringify(readyMsg));
-    }
-    socket.onmessage = (event) => {
-        console.log(event.data);
-        const packet: Packet = JSON.parse(event.data);
-        switch (packet.Type) {
-        case 'L':
-            console.log("Notification that game is starting");
-            break;
-        default:
-            console.log("Something else");
-        }
-    }
-
+    conn.sendPacket(readyMsg);
     document.body.removeChild(uiRoot);
-    startGame();
+    startGame(conn);
 }
 
-async function startGame() {
+async function startGame(conn: Connection) {
     const app = new Application();
     await app.init({
         resolution: window.devicePixelRatio || 1,
@@ -48,8 +34,31 @@ async function startGame() {
     });
 
     document.body.appendChild(app.canvas);
-    const conn = new Connection();
-    const game = new Game(app.ticker, conn, app.stage);
-    console.log(game.gamestate);
+    await wait(conn);
+    const gameInitOption = conn.getNextGameInitContext();
+
+    if (gameInitOption instanceof None) {
+        console.log("test");
+        console.error("Cannot initialise Game!");
+        return;
+    }
+    const gameInitCtx = gameInitOption.value;
+    console.log("Context Obj: ", gameInitCtx);
+    const game = new Game(app.ticker, conn, app.stage, gameInitCtx);
     game.run();
 };
+
+async function wait(conn: Connection) {
+    let flag = false;
+    while (!flag) {
+        if (conn.checkNextGameInitContext()) {
+            await sleep(100);
+        } else {
+            flag = true;
+        }
+    }
+}
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}

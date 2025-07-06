@@ -4,6 +4,7 @@ import { Projectile } from "./Projectile";
 import { AssetManager } from "./AssetManager";
 import { Direction } from "./Math/Direction";
 import { Point } from "./Math/Point";
+import { DeltaState, OrcDelta } from "./Connection";
 
 const ORC_SPEED = 0.5;
 export const MAP_WIDTH = 960;
@@ -14,7 +15,7 @@ export class Orc extends Container {
   Health: number;
   lastFacing: Direction = Direction.NONE;
   lastAction: Action = Action.NONE;
-  Direction: Direction = Direction.NONE;
+  Direction: Direction = Direction.NONE; // Direction & Action properties directly set by PlayerController locally
   Action: Action = Action.NONE;
   IsSwinging: boolean;
   idleSprites: AnimatedSprite[] = [];
@@ -96,14 +97,24 @@ export class Orc extends Container {
     }
   }
 
-  addFireballSprites(sprites: AnimatedSprite[]) {
-    this.fireballSprites = sprites;
-    for (let i = 0; i < this.fireballSprites.length; i++) {
-      this.fireballSprites[i].anchor.set(0.5);
-      this.fireballSprites[i].scale.set(2);
-      this.fireballSprites[i].animationSpeed = 0.2;
-      this.fireballSprites[i].loop = true;
+  updateFromServer(delta: OrcDelta) {
+    this.Direction = delta.Direction;
+    this.Action = delta.Action;
+    if (this.lastFacing != this.Direction || this.lastAction != this.Action) {
+      // Only update animations when required
+      this.updateSprite();
     }
+    if (this.Direction != Direction.NONE) {
+      this.lastFacing = this.Direction; // Direction.NONE is not a valid direction to face
+    }
+    this.lastAction = this.Action;
+    this.Health = delta.Health;
+    this.position.x = delta.Point.x;
+    this.position.y = delta.Point.y;
+    this.IsSwinging = delta.IsSwinging;
+    console.log(`Delta dir: ${delta.Direction}, action: ${delta.Action}`);
+    console.log(`Delta values: ${delta.Point.x}, ${delta.Point.y}`)
+    console.log(`New position: ${this.position}`);
   }
 
   update(deltaTime: number) {
@@ -139,7 +150,7 @@ export class Orc extends Container {
   }
 
   setDefaultSprite() {
-    this.currentSprite = this.idleSprites[Direction.UP];
+    this.currentSprite = this.idleSprites[Direction.UP-1];
     this.currentSprite.play();
     this.addChild(this.currentSprite);
   }
@@ -151,10 +162,10 @@ export class Orc extends Container {
     if (this.Action == Action.NONE) {
       this.currentSprite =
         Direction.NONE == this.Direction
-          ? this.idleSprites[currentDirection]
-          : this.runSprites[currentDirection];
+          ? this.idleSprites[currentDirection-1]
+          : this.runSprites[currentDirection-1];
     } else if (this.Action == Action.MELEE) {
-      this.currentSprite = this.attackSprites[currentDirection];
+      this.currentSprite = this.attackSprites[currentDirection-1];
     } else if (this.Action == Action.PROJECTILE) {
       console.log(this.gamestateRef);
       this.gamestateRef.projectiles.push(new Projectile(1, new Point(this.position.x, this.position.y), currentDirection, this.gamestateRef.stageRef));

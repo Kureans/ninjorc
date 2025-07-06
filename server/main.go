@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/Kureans/ninjorc/server/game"
@@ -17,5 +18,6 @@ func main() {
 	manager.Init()
 	http.HandleFunc("/", manager.HandleNewClient)
 	print("Listening on port 8080...\n")
-	http.ListenAndServe(":8080", nil)
+	log.Fatal(http.ListenAndServe(":8080", nil))
+
 }

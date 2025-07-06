@@ -21,9 +21,8 @@ export class Projectile extends Container {
     this.position.x = point.x;
     this.position.y = point.y;
     this.Direction = dir;
-    const assetPath = "sprites/fireball_right.json";
+    const assetPath = AssetManager.assetPaths["fireball"][dir];
     this.currentSprite = AssetManager.populateSprite(assetPath);
-    console.log(this.currentSprite);
     this.addChild(this.currentSprite);
     this.currentSprite.anchor.set(0.5);
     this.currentSprite.scale.set(2);

@@ -10,7 +10,7 @@ import (
 type Connection struct {
 	socket  *websocket.Conn
 	gameCh  chan<- GameInputBatch
-	lobbyCh chan<- LobbyInput
+	lobbyCh chan<- LobbyInputClient
 }
 
 // for alt serialisation protocols, use readMessage then a separate serialisation fn
@@ -48,20 +48,12 @@ func printPayload(p *Packet) {
 			fmt.Printf("Orc %d: x: %d, y: %d\n", idx, point.X, point.Y)
 		}
 	case "L":
-		li, ok := p.Data[0].(LobbyInput)
+		li, ok := p.Data[0].(LobbyInputClient)
 		if !ok {
 			print("Value is not a LobbyInput")
 		}
-		fmt.Print("Can Start Game? ", li.CanStartGame)
 		fmt.Print("Is Ready? ", li.IsReady)
 	case "G":
 		fmt.Print("Game Payload TODO")
 	}
-}
-
-type PayloadUnion struct {
-	Lobby   LobbyInput
-	Game    GameInput
-	State   GameResponse
-	Context GameInitContext
 }

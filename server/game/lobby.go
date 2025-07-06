@@ -34,8 +34,8 @@ func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lobbyCh := make(chan LobbyInput)
-	gameCh := make(chan GameInputBatch)
+	lobbyCh := make(chan LobbyInputClient)
+	gameCh := make(chan GameInputBatch, 100)
 	//add to lobby 1 for now
 	conn := Connection{
 		socket:  socket,
@@ -44,7 +44,7 @@ func (m *LobbyManager) HandleNewClient(w http.ResponseWriter, r *http.Request) {
 	}
 
 	player := &Player{
-		id:      len(m.lobbies[0].players) + 1,
+		id:      len(m.lobbies[0].players),
 		isReady: true,
 		conn:    conn,
 		//init orc later when game starts
@@ -97,7 +97,7 @@ func (l *Lobby) resetReadyStatus() {
 
 func (l *Lobby) notifyPlayers() {
 	payloadArr := make([]interface{}, 1)
-	payloadArr[0] = LobbyInput{CanStartGame: true}
+	payloadArr[0] = LobbyInputServer{CanStartGame: true}
 	notificationPacket := Packet{
 		Id: 1, Type: "L", Size: 1, Data: payloadArr,
 	}
@@ -105,7 +105,6 @@ func (l *Lobby) notifyPlayers() {
 		notificationPacket.Id = idx
 		player.conn.sendPacket(notificationPacket)
 	}
-
 }
 
 func (l *Lobby) startGame() {

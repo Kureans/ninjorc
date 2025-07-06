@@ -1,7 +1,6 @@
 package game
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -22,11 +21,11 @@ const (
 	ORC_SWING_DAMAGE = 40
 
 	PROJECTILE_SPEED = 5
-	MAP_WIDTH        = 1500
-	MAP_HEIGHT       = 700
+	MAP_WIDTH        = 960
+	MAP_HEIGHT       = 640
 
 	TIME_UNIT_MS_DEV  = 1000 // 1 tick
-	TIME_UNIT_MS_PROD = 15.6 // 64 tick
+	TIME_UNIT_MS_PROD = 16   // around 64 tick
 
 	SCORE_TO_WIN = 2
 )
@@ -47,7 +46,7 @@ func (g *Game) initResponseChannels(players *[]*Player) {
 }
 
 func (g *Game) run() {
-	for range time.Tick(TIME_UNIT_MS_DEV * time.Millisecond) {
+	for range time.Tick(TIME_UNIT_MS_PROD * time.Millisecond) {
 
 		for idx := range g.gameState.orcs {
 			orc := &g.gameState.orcs[idx]
@@ -87,7 +86,7 @@ func (g *Game) run() {
 			fmt.Printf("swing ticks remaining from orc %d: %d\n", swing.id, swing.activeTicksRemaining)
 		}
 
-		fmt.Printf("No. of swings in play: %d\n", len(g.gameState.meleeSwings))
+		// fmt.Printf("No. of swings in play: %d\n", len(g.gameState.meleeSwings))
 
 		for len(g.gameState.meleeSwings) > 0 && g.gameState.meleeSwings[0].activeTicksRemaining == 0 {
 			g.gameState.orcs[g.gameState.meleeSwings[0].id].IsSwinging = false
@@ -138,12 +137,7 @@ func (gs *GameState) init(players *[]*Player) {
 			ClientId:         idx,
 			IdToOrcLocations: idToOrcLocations,
 		}
-		jsonData, err := json.Marshal(ctx)
-		if err != nil {
-			fmt.Print("Error Marshalling, ", err)
-			return
-		}
-		fmt.Println(string(jsonData))
+
 		payloadArr := make([]interface{}, 1)
 		payloadArr[0] = ctx
 		pkt := Packet{
@@ -152,7 +146,7 @@ func (gs *GameState) init(players *[]*Player) {
 			Size: 1,
 			Data: payloadArr,
 		}
-		printPayload(&pkt)
+
 		player.conn.sendPacket(pkt)
 		player.controller.orc = &gs.orcs[idx]
 		go player.controller.handleGameInputs()
@@ -219,9 +213,9 @@ func (o *Orc) updateAction(action Action) {
 	case Action_PROJECTILE:
 		print("orc fire")
 		o.Action = Action_PROJECTILE
-	case Action_NONE:
-		print("orc do nothing")
-		o.Action = Action_NONE
+		// case Action_NONE:
+		// 	print("orc do nothing")
+		// 	o.Action = Action_NONE
 	}
 }
 

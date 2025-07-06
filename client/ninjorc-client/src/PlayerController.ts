@@ -1,12 +1,25 @@
 import { Direction } from "./Math/Direction";
 import { Action, Orc } from "./Orc";
 
+type TDirection = {
+    tag: "D";
+    value: Direction;
+};
+
+type TAction = {
+    tag: "A";
+    value: Action;
+};
+
+type GameInput = TDirection | TAction;
+
 export class PlayerController {
     id: number;
     orc: Orc;
     hasReceivedInput: boolean;
     keysCurrentlyPressed: number;
-    keyMap: Map<Direction, boolean>
+    keyMap: Map<Direction, boolean>;
+    inputQueue: GameInput[]= [];
 
     constructor(id: number, orc: Orc) {
         this.id = id;
@@ -34,6 +47,7 @@ export class PlayerController {
                     this.keyMap.set(Direction.DOWN, true);
                 }
                 console.log("down");
+                this.inputQueue.push({tag: "D", value: Direction.DOWN});
             }
             else if (event.key == "ArrowUp") {
                 this.orc.Direction = Direction.UP;
@@ -42,6 +56,7 @@ export class PlayerController {
                     this.keyMap.set(Direction.UP, true);
                 }
                 console.log("up");
+                this.inputQueue.push({tag: "D", value: Direction.UP});
             }
             else if (event.key == "ArrowLeft") {
                 this.orc.Direction = Direction.LEFT;
@@ -50,6 +65,7 @@ export class PlayerController {
                     this.keyMap.set(Direction.LEFT, true);
                 }
                 console.log("left");
+                this.inputQueue.push({tag: "D", value: Direction.LEFT});
             }
             else if (event.key == "ArrowRight") {
                 this.orc.Direction = Direction.RIGHT;
@@ -58,14 +74,17 @@ export class PlayerController {
                     this.keyMap.set(Direction.RIGHT, true);
                 }
                 console.log("right");
+                this.inputQueue.push({tag: "D", value: Direction.RIGHT});
             }
             else if (event.key == "Z" || event.key == "z") {
                 this.orc.Action = Action.MELEE;
                 console.log("swing");
+                this.inputQueue.push({tag: "A", value: Action.MELEE});
             }
             else if (event.key == "X" || event.key == "x") {
                 this.orc.Action = Action.PROJECTILE;
                 console.log("fire");
+                this.inputQueue.push({tag: "A", value: Action.PROJECTILE});
             }
         })
 
